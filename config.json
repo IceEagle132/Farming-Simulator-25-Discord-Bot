@@ -1,0 +1,32 @@
+{
+    "server": {
+        "stats_url": "http://your-server-url/feed/dedicated-server-stats.xml",
+        "economy_url": "http://your-server-url/feed/dedicated-server-savegame.html?file=economy",
+        "auto_update_channel_id": channel_id_here
+    },
+    "channels": {
+        "prices_channel_id": channel_id_here
+    },
+    "cleanup_interval": 3600,
+    "replacements": {
+        "trainTrailer": "Trailer",
+        "implement": "Truck",
+        "weeder": "Weeder",
+        "tractor": "Tractor",
+        "motorbike": "Motorcycle",
+        "trainTimberTrailer": "Flatbed Trailer"
+    },
+    "intervals": {
+        "status_update_seconds": 60,
+        "event_monitor_seconds": 60
+    },
+    "messages": {
+        "server_update": "**Server Updates**\n🖥️ **Server Name:** {server_name}\n🗺️ **Map Name:** {map_name}\n👥 **Players Online:** {players_online}/{player_capacity}\n⏱️ **Farm Progress:** {hours} hours, {minutes} minutes\n\n🚜 **Vehicles:**\n{vehicles}\n\n🛠️ **Installed Mods:**\n{mods}\n\n💡 *This message updates every minute.*"
+    },
+    "common_fill_types": [
+        "Wheat", "Barley", "Canola", "Oats", "Corn", "Sunflowers", "Soybeans",
+        "Potatoes", "Rice", "Long Grain Rice", "Sugar Beet", "Sugarcane",
+        "Cotton", "Sorghum", "Grapes", "Olives", "Poplar", "Red Beet", "Carrots",
+        "Parsnip", "Green Beans", "Peas", "Spinach", "Grass", "Oilseed Radish"
+    ]
+}
