@@ -37,7 +37,7 @@ A customizable Discord bot designed to provide crop price history, best prices, 
 
 1. **Clone the repository:**
    ```bash
-   git clone https://github.com/your-username/FarmingSimulator25Bot.git
+   git clone https://github.com/IceEagle132/FarmingSimulator25Bot.git
    ```
    
 2. **Navigate to the project folder:**
