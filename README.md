@@ -55,7 +55,7 @@ A customizable Discord bot designed to provide crop price history, best prices, 
    pip install -r requirements.txt
    ```
 
-4. **Edit The `.env` file:**
+4. **create a `.env` file:**
    - Add your Discord bot token in the following format:
      ```plaintext
      DISCORD_BOT_TOKEN=your-discord-bot-token
