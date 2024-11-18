@@ -66,10 +66,11 @@ A customizable Discord bot designed to provide crop price history, best prices, 
          "server": {
              "stats_url": "http://your-server-url/feed/dedicated-server-stats.xml",
              "economy_url": "http://your-server-url/feed/dedicated-server-savegame.html?file=economy",
-             "auto_update_channel_id": 123456789012345678
          },
          "channels": {
-             "prices_channel_id": 123456789012345678
+             "auto_update_channel_id": 1307683821503778887,
+             "prices_channel_id": 1307683849651617903,
+             "player_notifications_channel_id": 1307759388081000531
          },
          "replacements": {
              "trainTrailer": "Trailer",
@@ -81,7 +82,7 @@ A customizable Discord bot designed to provide crop price history, best prices, 
          },
          "intervals": {
              "status_update_seconds": 60,
-             "event_monitor_seconds": 60,
+             "event_monitor_seconds": 30,
              "cleanup_interval": 3600,
          },
          "messages": {

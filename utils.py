@@ -86,10 +86,17 @@ async def ensure_pinned_message(bot):
         print(f"Pinned a new message in the prices channel.")
 
 def fetch_server_stats():
-    """Fetch and parse the server stats XML data."""
+    """
+    Fetch and parse server stats from the FS25 server.
+    Returns:
+        ElementTree.Element: Parsed XML root element or None if an error occurs.
+    """
     try:
+        # Fetch stats from the FS25 stats URL
         response = requests.get(STATS_URL)
         response.raise_for_status()
+
+        # Parse the XML response
         return ET.fromstring(response.content)
     except Exception as e:
         print(f"Error fetching server stats: {e}")

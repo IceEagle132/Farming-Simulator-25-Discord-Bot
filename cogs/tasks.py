@@ -4,6 +4,7 @@ from config import (
     STATS_URL,
     AUTO_UPDATE_CHANNEL_ID,
     PRICES_CHANNEL_ID,
+    PLAYER_NOTIFICATIONS_CHANNEL_ID,  # Add a dedicated channel for player notifications
     VEHICLE_REPLACEMENTS,
     STATUS_UPDATE_SECONDS,
     EVENT_MONITOR_SECONDS,
@@ -13,11 +14,13 @@ from config import (
 from utils import load_pinned_message_id, save_pinned_message_id, fetch_server_stats
 from datetime import datetime, timedelta, timezone
 
+
 class Tasks(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
         self.pinned_message_id = load_pinned_message_id()
         self.tasks_started = False  # Flag to prevent starting tasks multiple times
+        self.previous_players = {}  # Cache for player join/leave tracking
 
     @commands.Cog.listener()
     async def on_ready(self):
@@ -25,6 +28,7 @@ class Tasks(commands.Cog):
             self.update_status.start()
             self.monitor_events.start()
             self.cleanup_messages.start()
+            self.track_player_activity.start()  # Start player tracking task
             self.tasks_started = True
             print("Started all tasks.")
 
@@ -32,6 +36,7 @@ class Tasks(commands.Cog):
         self.update_status.cancel()
         self.monitor_events.cancel()
         self.cleanup_messages.cancel()
+        self.track_player_activity.cancel()
 
     @tasks.loop(seconds=STATUS_UPDATE_SECONDS)
     async def update_status(self):
@@ -127,6 +132,55 @@ class Tasks(commands.Cog):
     async def before_monitor_events(self):
         await self.bot.wait_until_ready()
 
+    # Task: Track player joins and leaves
+    @tasks.loop(seconds=EVENT_MONITOR_SECONDS)
+    async def track_player_activity(self):
+        """
+        Periodically track player activity on the server, detecting joins and leaves.
+        Sends notifications to the player activity channel.
+        """
+        try:
+            # Fetch server stats
+            stats_data = fetch_server_stats()
+            if stats_data is None:
+                print("Failed to fetch server stats.")
+                return
+
+            # Parse current players
+            current_players = set()
+            slots = stats_data.find("Slots")
+            if slots:
+                for player in slots.findall("Player"):
+                    if player.attrib.get("isUsed") == "true":
+                        name = player.text.strip()
+                        current_players.add(name)
+
+            # Ensure previous_players is a set
+            if not hasattr(self, "previous_players") or not isinstance(self.previous_players, set):
+                self.previous_players = set()
+
+            # Compare with previous players
+            joined_players = current_players - self.previous_players
+            left_players = self.previous_players - current_players
+
+            # Notify the dedicated player notifications channel
+            notification_channel = self.bot.get_channel(PLAYER_NOTIFICATIONS_CHANNEL_ID)
+            if notification_channel:
+                for player in joined_players:
+                    await notification_channel.send(f"🎮 **Player Joined:** {player}")
+                for player in left_players:
+                    await notification_channel.send(f"🚪 **Player Left:** {player}")
+
+            # Update the cached player list
+            self.previous_players = current_players
+
+        except Exception as e:
+            print(f"Error in track_player_activity: {e}")
+
+    @track_player_activity.before_loop
+    async def before_track_player_activity(self):
+        await self.bot.wait_until_ready()
+
     @tasks.loop(seconds=CLEANUP_INTERVAL)
     async def cleanup_messages(self):
         try:
@@ -150,6 +204,7 @@ class Tasks(commands.Cog):
     @cleanup_messages.before_loop
     async def before_cleanup_messages(self):
         await self.bot.wait_until_ready()
+
 
 async def setup(bot):
     await bot.add_cog(Tasks(bot))
