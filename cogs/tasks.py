@@ -5,13 +5,18 @@ from config import (
     AUTO_UPDATE_CHANNEL_ID,
     PRICES_CHANNEL_ID,
     PLAYER_NOTIFICATIONS_CHANNEL_ID,  # Add a dedicated channel for player notifications
-    VEHICLE_REPLACEMENTS,
     STATUS_UPDATE_SECONDS,
     EVENT_MONITOR_SECONDS,
     CLEANUP_INTERVAL,
     SERVER_UPDATE_MESSAGE,
 )
-from utils import load_pinned_message_id, save_pinned_message_id, fetch_server_stats
+from utils import (
+    load_pinned_message_id,
+    save_pinned_message_id,
+    fetch_server_stats,
+    fetch_economy_data,
+    fetch_career_savegame_data,  # Added fetch_career_savegame_data
+)
 from datetime import datetime, timedelta, timezone
 
 
@@ -20,7 +25,7 @@ class Tasks(commands.Cog):
         self.bot = bot
         self.pinned_message_id = load_pinned_message_id()
         self.tasks_started = False  # Flag to prevent starting tasks multiple times
-        self.previous_players = {}  # Cache for player join/leave tracking
+        self.previous_players = set()  # Cache for player join/leave tracking
 
     @commands.Cog.listener()
     async def on_ready(self):
@@ -66,10 +71,14 @@ class Tasks(commands.Cog):
     async def monitor_events(self):
         try:
             stats_data = fetch_server_stats()
-            if stats_data is None:
+            economy_data = fetch_economy_data()
+            career_data = fetch_career_savegame_data()  # Fetch career savegame data
+
+            if stats_data is None or economy_data is None or career_data is None:
+                print("Failed to fetch some data.")
                 return
 
-            # Extract relevant details
+            # Extract server stats
             server_name = stats_data.attrib.get("name", "N/A")
             map_name = stats_data.attrib.get("mapName", "N/A")
             slots = stats_data.find("Slots").attrib
@@ -79,13 +88,12 @@ class Tasks(commands.Cog):
             hours = day_time // 3600
             minutes = (day_time % 3600) // 60
 
-            # Vehicles
-            vehicles = stats_data.find("Vehicles").findall("Vehicle")
-            vehicle_list = [
-                f"{vehicle.attrib.get('name', 'Unknown')} ({VEHICLE_REPLACEMENTS.get(vehicle.attrib.get('type', 'Unknown Type'), vehicle.attrib.get('type', 'Unknown Type'))})"
-                for vehicle in vehicles
-            ]
-            grouped_vehicles = "\n".join([", ".join(vehicle_list[i:i+3]) for i in range(0, len(vehicle_list), 3)])
+            # Extract career savegame data
+            creation_date = career_data["creation_date"]
+            last_save_date = career_data["last_save_date"]
+            economic_difficulty = career_data["economic_difficulty"]
+            time_scale = str(int(float(career_data["time_scale"])))  # Clean time scale
+            current_money = f"${int(career_data['current_money']):,}"  # Format with commas
 
             # Mods
             mods = stats_data.find("Mods").findall("Mod")
@@ -100,7 +108,11 @@ class Tasks(commands.Cog):
                 player_capacity=player_capacity,
                 hours=hours,
                 minutes=minutes,
-                vehicles=grouped_vehicles,
+                creation_date=creation_date,
+                last_save_date=last_save_date,
+                economic_difficulty=economic_difficulty,
+                time_scale=time_scale,
+                current_money=current_money,
                 mods=grouped_mods
             )
 
@@ -155,10 +167,6 @@ class Tasks(commands.Cog):
                         name = player.text.strip()
                         current_players.add(name)
 
-            # Ensure previous_players is a set
-            if not hasattr(self, "previous_players") or not isinstance(self.previous_players, set):
-                self.previous_players = set()
-
             # Compare with previous players
             joined_players = current_players - self.previous_players
             left_players = self.previous_players - current_players
@@ -197,7 +205,7 @@ class Tasks(commands.Cog):
                     continue
                 if message.created_at < time_threshold:
                     await message.delete()
-            print(f"Cleaned up messages older than {CLEANUP_INTERVAL} seconds in the prices channel.")
+            #print(f"Cleaned up messages older than {CLEANUP_INTERVAL} seconds in the prices channel.")
         except Exception as e:
             print(f"Error in cleanup_messages: {e}")
 

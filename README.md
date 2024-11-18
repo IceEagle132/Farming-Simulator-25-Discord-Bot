@@ -11,13 +11,12 @@ A customizable Discord bot designed to provide crop price history, best prices, 
   - Automatically refreshes pinned messages in the prices channel to match updated crop lists.
 
   ![Crop Price Command](https://i.imgur.com/rsL6Z4C.png "Crop Price Command Example")
-  ![Crop Price Pin](https://i.imgur.com/fqhR8Th.png "Crop Price Pin Example")
   
 - **Server Updates**:
   - Displays live Farming Simulator 25 server stats, including player count, map name, vehicles, and installed mods.
   - Updates bot status to show the number of players online.
 
-  ![Server Updates](https://i.imgur.com/ikm6rS1.png "Server Updates Example")
+  ![Server Updates](https://i.imgur.com/iI7YWjo.png "Server Updates Example")
   ![Server Status](https://i.imgur.com/UDr5TnO.png "Server Status Example")
 
   ![Player Join/Leave](https://i.imgur.com/AMEgGEF.png "Join/Leave Example")
@@ -68,32 +67,25 @@ A customizable Discord bot designed to provide crop price history, best prices, 
    - Update the file with your specific server details:
      ```json
      {
-         "server": {
-             "stats_url": "http://your-server-url/feed/dedicated-server-stats.xml",
-             "economy_url": "http://your-server-url/feed/dedicated-server-savegame.html?file=economy",
-         },
-         "channels": {
-             "auto_update_channel_id": 1307683821503778887,
-             "prices_channel_id": 1307683849651617903,
-             "player_notifications_channel_id": 1307759388081000531
-         },
-         "replacements": {
-             "trainTrailer": "Trailer",
-             "implement": "Truck",
-             "weeder": "Weeder",
-             "tractor": "Tractor",
-             "motorbike": "Motorcycle",
-             "trainTimberTrailer": "Flatbed Trailer"
-         },
-         "intervals": {
-             "status_update_seconds": 60,
-             "event_monitor_seconds": 30,
-             "cleanup_interval": 3600,
-         },
-         "messages": {
-             "server_update": "**Server Updates**\n🖥️ **Server Name:** {server_name}\n🗺️ **Map Name:** {map_name}\n👥 **Players Online:** {players_online}/{player_capacity}\n⏱️ **Farm Progress:** {hours} hours, {minutes} minutes\n\n🚜 **Vehicles:**\n{vehicles}\n\n🛠️ **Installed Mods:**\n{mods}\n\n💡 *This message updates every minute.*"
-         },
-         "common_fill_types": [
+        "server": {
+            "stats_url": "http://your-server-url/feed/dedicated-server-stats.xml",
+            "economy_url": "http://your-server-url/feed/dedicated-server-savegame.html?file=economy",
+            "career_savegame_url": "http://your-server-url/feed/dedicated-server-savegame.html?file==careerSavegame"
+        },
+        "channels": {
+            "auto_update_channel_id": channel_id_here,
+            "prices_channel_id": channel_id_here,
+            "player_notifications_channel_id": channel_id_here
+        },
+        "intervals": {
+            "status_update_seconds": 60,
+            "event_monitor_seconds": 30,
+            "cleanup_interval": 30
+        },
+        "messages": {
+            "server_update": "**Server Updates**\n\n🌐 **Server Name**: {server_name}\n🗺️ **Map Name**: {map_name}\n\n👥 **Players Online**: {players_online}/{player_capacity}\n⏳ **Farm Progress**: {hours}h {minutes}m\n\n📅 **Savegame Creation Date**: {creation_date}\n💾 **Last Save Date**: {last_save_date}\n\n📊 **Economic Difficulty**: {economic_difficulty}\n⏱️ **Time Scale**: {time_scale}x\n💰 **Current Money**: {current_money}\n\n🔧 **Mods**:\n{mods}"
+        },
+        "common_fill_types": [
             "Wheat", "Barley", "Oat", "Canola", "Sorghum", "Sunflower", 
             "Soybean", "Maize", "Potato", "SugarBeet", "Beetroot", "Carrot", 
             "Parsnip", "Cotton", "RiceLongGrain", "Rice", "GreenBeans", "Peas", 
@@ -129,7 +121,7 @@ A customizable Discord bot designed to provide crop price history, best prices, 
             "PigLandrace", "PigBlackPied", "PigBerkshire", "Chicken", 
             "ChickenRooster", "Goat"
         ]
-     }
+    }
      ```
 
 ---
@@ -157,8 +149,11 @@ python bot.py
 - **Pinned Message Refresh**:
   - Automatically updates the pinned message in the prices channel to reflect changes in `config.json`.
 
-- **Live Server Stats**:
-  - Monitors and updates server stats, player counts, and installed mods every minute.
+- **Live Server Stats**:  
+  -📡 **Monitors and updates** server information, including:  
+  - 🧍‍♂️ **Player Activity**: Tracks player joins and leaves.  
+  - 📊 **Server Stats**: Updates player counts and farm progress.  
+  - 🔧 **Mods**: Displays currently installed mods.
 
 - **Message Cleanup**:
   - Removes outdated messages in the prices channel (customizable via `cleanup_interval` in `config.json`).

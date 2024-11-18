@@ -1,6 +1,6 @@
 import requests
 import xml.etree.ElementTree as ET
-from config import ECONOMY_URL, STATS_URL, PRICES_CHANNEL_ID, COMMON_FILL_TYPES
+from config import ECONOMY_URL, STATS_URL, PRICES_CHANNEL_ID, COMMON_FILL_TYPES, CAREER_SAVEGAME_URL
 import discord
 
 def fetch_economy_data():
@@ -107,6 +107,56 @@ async def ensure_pinned_message(bot):
         message = await channel.send(fill_types_message)
         await message.pin()
         print(f"Pinned a new message in the prices channel.")
+
+def fetch_career_savegame_data():
+    """
+    Fetch data from the career savegame URL.
+    Returns a dictionary containing relevant parsed data.
+    """
+    try:
+        response = requests.get(CAREER_SAVEGAME_URL)
+        response.raise_for_status()  # Raise an error for HTTP issues
+
+        # Parse the XML content
+        root = ET.fromstring(response.content)
+
+        # Locate the settings element
+        settings = root.find("settings")
+        if settings is None:
+            print("Settings section not found in the XML.")
+            return None
+
+        # Extract data from the settings element
+        creation_date = settings.findtext("creationDate", "Unknown")
+        last_save_date = settings.findtext("saveDate", "Unknown")
+        economic_difficulty = settings.findtext("economicDifficulty", "Unknown")
+        time_scale = settings.findtext("timeScale", "1")
+        
+        # Locate the statistics element for money
+        statistics = root.find("statistics")
+        current_money = statistics.findtext("money", "0") if statistics else "0"
+
+        # Debug extracted data
+        # print(
+        #     f"Extracted Data -> Creation Date: {creation_date}, Last Save Date: {last_save_date}, "
+        #     f"Economic Difficulty: {economic_difficulty}, Time Scale: {time_scale}, Current Money: {current_money}"
+        # )
+
+        # Return the data as a dictionary
+        return {
+            "creation_date": creation_date,
+            "last_save_date": last_save_date,
+            "economic_difficulty": economic_difficulty,
+            "time_scale": time_scale,
+            "current_money": current_money,
+        }
+    except requests.exceptions.RequestException as e:
+        print(f"Error fetching career savegame data: {e}")
+        return None
+    except ET.ParseError as e:
+        print(f"Error parsing career savegame XML: {e}")
+        return None
+
 
 def fetch_server_stats():
     """
