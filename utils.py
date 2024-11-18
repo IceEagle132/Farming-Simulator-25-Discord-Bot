@@ -70,12 +70,35 @@ async def ensure_pinned_message(bot):
 
     pinned_messages = await channel.pins()
 
-    fill_types_message = (
-        "📋 **Available Crops for /prices**\n\n"
-        + ", ".join(COMMON_FILL_TYPES)
-        + "\n\nUse `/prices <crop>` to view the price history or best prices."
-    )
+    # Dynamically group crops into categories
+    categories = {
+        "Grains": ["Wheat", "Barley", "Oat", "Canola", "Sorghum", "Sunflower", "Soybean", "Maize"],
+        "Roots and Tubers": ["Potato", "SugarBeet", "Beetroot", "Carrot", "Parsnip"],
+        "Specialty Crops": ["Cotton", "RiceLongGrain", "Rice", "GreenBeans", "Peas", "Spinach", "Sugarcane"],
+        "Fruits and Oils": ["Grape", "Olive", "SunflowerOil", "CanolaOil", "OliveOil", "Raisins", "GrapeJuice"],
+        "Dairy and Animal Products": ["Milk", "GoatMilk", "BuffaloMilk", "Butter", "Cheese", "BuffaloMozzarella", "GoatCheese", "Wool", "Egg", "Honey"],
+        "Processed Materials": ["Wood", "WoodChips", "SugarBeetCut", "Silage", "Grass", "DryGrass", "Straw"],
+        "Vegetables and Greens": ["Lettuce", "Tomato", "Strawberry", "SpringOnion", "NapaCabbage", "Chilli", "Garlic", "Enoki", "SpinachBags"],
+        "Baked Goods and Sweets": ["Flour", "RiceFlour", "Bread", "Cake", "Chocolate"],
+        "Preserved Items": ["FermentedNapaCabbage", "PreservedCarrots", "PreservedParsnip", "PreservedBeetroot"],
+        "Soups and Canned Goods": ["NoodleSoup", "SoupCansMixed", "SoupCansCarrots", "SoupCansParsnip", "SoupCansBeetroot", "SoupCansPotato"],
+        "Fabric and Clothing": ["Fabric", "Clothes"],
+        "Miscellaneous": ["Sugar", "Boards", "Planks", "WoodBeam", "PrefabWall", "Cement", "Barrel", "Bathtub", "Bucket", "Rope"],
+    }
 
+    # Generate the message dynamically
+    fill_types_message = "📋 **Available Crops for /prices**\n\n"
+    for category, items in categories.items():
+        included_items = [item for item in items if item in COMMON_FILL_TYPES]
+        if included_items:
+            fill_types_message += f"**{category}**:\n```\n"
+            for item in included_items:
+                fill_types_message += f"{item}\n"  # Add each crop to the box
+            fill_types_message += "```\n\n"
+
+    fill_types_message += "Use `/prices <crop>` to view the price history or best prices."
+
+    # Check if a pinned message exists and update or create it
     if pinned_messages:
         pinned_message = pinned_messages[0]
         await pinned_message.edit(content=fill_types_message)
