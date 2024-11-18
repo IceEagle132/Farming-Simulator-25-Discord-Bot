@@ -17,7 +17,7 @@ PRICES_CHANNEL_ID = int(config_data["channels"]["prices_channel_id"])
 VEHICLE_REPLACEMENTS = config_data["replacements"]
 STATUS_UPDATE_SECONDS = config_data["intervals"]["status_update_seconds"]
 EVENT_MONITOR_SECONDS = config_data["intervals"]["event_monitor_seconds"]
-CLEANUP_INTERVAL = config_data["cleanup_interval"]
+CLEANUP_INTERVAL = config_data["intervals"]["cleanup_interval"]
 SERVER_UPDATE_MESSAGE = config_data["messages"]["server_update"]
 COMMON_FILL_TYPES = config_data["common_fill_types"]
 

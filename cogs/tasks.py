@@ -135,7 +135,7 @@ class Tasks(commands.Cog):
                 print(f"Prices channel with ID {PRICES_CHANNEL_ID} not found.")
                 return
 
-            time_threshold = datetime.now(timezone.utc) - timedelta(minutes=1)
+            time_threshold = datetime.now(timezone.utc) - timedelta(seconds=CLEANUP_INTERVAL)
 
             # Fetch messages from the channel
             async for message in channel.history(limit=100):
@@ -143,7 +143,7 @@ class Tasks(commands.Cog):
                     continue
                 if message.created_at < time_threshold:
                     await message.delete()
-            print(f"Cleaned up messages older than 1 minute in the prices channel.")
+            print(f"Cleaned up messages older than {CLEANUP_INTERVAL} seconds in the prices channel.")
         except Exception as e:
             print(f"Error in cleanup_messages: {e}")
 

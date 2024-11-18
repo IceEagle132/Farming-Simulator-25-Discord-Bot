@@ -71,7 +71,6 @@ A customizable Discord bot designed to provide crop price history, best prices, 
          "channels": {
              "prices_channel_id": 123456789012345678
          },
-         "cleanup_interval": 3600,
          "replacements": {
              "trainTrailer": "Trailer",
              "implement": "Truck",
@@ -82,7 +81,8 @@ A customizable Discord bot designed to provide crop price history, best prices, 
          },
          "intervals": {
              "status_update_seconds": 60,
-             "event_monitor_seconds": 60
+             "event_monitor_seconds": 60,
+             "cleanup_interval": 3600,
          },
          "messages": {
              "server_update": "**Server Updates**\n🖥️ **Server Name:** {server_name}\n🗺️ **Map Name:** {map_name}\n👥 **Players Online:** {players_online}/{player_capacity}\n⏱️ **Farm Progress:** {hours} hours, {minutes} minutes\n\n🚜 **Vehicles:**\n{vehicles}\n\n🛠️ **Installed Mods:**\n{mods}\n\n💡 *This message updates every minute.*"
