@@ -12,8 +12,9 @@ with open("config.json", "r", encoding="utf-8") as config_file:
 # Config values
 STATS_URL = config_data["server"]["stats_url"]
 ECONOMY_URL = config_data["server"]["economy_url"]
-AUTO_UPDATE_CHANNEL_ID = int(config_data["server"]["auto_update_channel_id"])
+AUTO_UPDATE_CHANNEL_ID = int(config_data["channels"]["auto_update_channel_id"])
 PRICES_CHANNEL_ID = int(config_data["channels"]["prices_channel_id"])
+PLAYER_NOTIFICATIONS_CHANNEL_ID = int(config_data["channels"]["player_notifications_channel_id"])
 VEHICLE_REPLACEMENTS = config_data["replacements"]
 STATUS_UPDATE_SECONDS = config_data["intervals"]["status_update_seconds"]
 EVENT_MONITOR_SECONDS = config_data["intervals"]["event_monitor_seconds"]
