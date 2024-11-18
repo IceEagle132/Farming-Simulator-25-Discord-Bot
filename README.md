@@ -20,11 +20,16 @@ A customizable Discord bot designed to provide crop price history, best prices, 
   ![Server Updates](https://i.imgur.com/ikm6rS1.png "Server Updates Example")
   ![Server Status](https://i.imgur.com/UDr5TnO.png "Server Status Example")
 
+  ![Player Join/Leave](https://i.imgur.com/AMEgGEF.png "Join/Leave Example")
+
 - **Customizable Settings**:
   - Configure channels, crops, and update intervals using `config.json`.
 
 - **Cleanup Task**:
   - Periodically removes outdated messages in the prices channel for better organization.
+
+- **Join/Leave**:
+  - Periodically checks if a player joins or leaves the server and announces it to discord.
 
 ---
 
