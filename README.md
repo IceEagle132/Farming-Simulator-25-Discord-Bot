@@ -121,8 +121,7 @@ A customizable Discord bot designed to provide crop price history, best prices, 
             "PigLandrace", "PigBlackPied", "PigBerkshire", "Chicken", 
             "ChickenRooster", "Goat"
         ]
-    }
-     ```
+    }```
 ---
 
 ### Running the Bot
