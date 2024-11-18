@@ -102,7 +102,7 @@ A customizable Discord bot designed to provide crop price history, best prices, 
 
 Run the bot with:
 ```bash
-python farmsim.py
+python bot.py
 ```
 
 ---
