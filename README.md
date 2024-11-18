@@ -65,63 +65,37 @@ A customizable Discord bot designed to provide crop price history, best prices, 
 
 5. **Configure `config.json`:**
    - Update the file with your specific server details:
-     ```json
-     {
-        "server": {
-            "stats_url": "http://your-server-url/feed/dedicated-server-stats.xml",
-            "economy_url": "http://your-server-url/feed/dedicated-server-savegame.html?file=economy",
-            "career_savegame_url": "http://your-server-url/feed/dedicated-server-savegame.html?file==careerSavegame"
-        },
-        "channels": {
-            "auto_update_channel_id": channel_id_here,
-            "prices_channel_id": channel_id_here,
-            "player_notifications_channel_id": channel_id_here
-        },
-        "intervals": {
-            "status_update_seconds": 60,
-            "event_monitor_seconds": 30,
-            "cleanup_interval": 30
-        },
-        "messages": {
-            "server_update": "**Server Updates**\n\n🌐 **Server Name**: {server_name}\n🗺️ **Map Name**: {map_name}\n\n👥 **Players Online**: {players_online}/{player_capacity}\n⏳ **Farm Progress**: {hours}h {minutes}m\n\n📅 **Savegame Creation Date**: {creation_date}\n💾 **Last Save Date**: {last_save_date}\n\n📊 **Economic Difficulty**: {economic_difficulty}\n⏱️ **Time Scale**: {time_scale}x\n💰 **Current Money**: {current_money}\n\n🔧 **Mods**:\n{mods}"
-        },
-        "common_fill_types": [
-            "Wheat", "Barley", "Oat", "Canola", "Sorghum", "Sunflower", 
-            "Soybean", "Maize", "Potato", "SugarBeet", "Beetroot", "Carrot", 
-            "Parsnip", "Cotton", "RiceLongGrain", "Rice", "GreenBeans", "Peas", 
-            "Spinach", "Sugarcane", "Wood", "WoodChips", "SugarBeetCut", "Silage", 
-            "Grass", "Meadow", "GrassWindrow", "DryGrass", "DryGrassWindrow", 
-            "Straw", "WheatCut", "BarleyCut", "OatCut", "CanolaCut", "SoybeanCut", 
-            "Grape", "Olive", "Milk", "GoatMilk", "BuffaloMilk", "Wool", "Egg", 
-            "Honey", "Lettuce", "Tomato", "Strawberry", "SpringOnion", "NapaCabbage", 
-            "Chilli", "Garlic", "Enoki", "Oyster", "Boards", "Planks", "WoodBeam", 
-            "PrefabWall", "Flour", "RiceFlour", "Bread", "Cake", "MilkBottled", 
-            "GoatMilkBottled", "BuffaloMilkBottled", "Butter", "Cheese", 
-            "BuffaloMozzarella", "GoatCheese", "Chocolate", "PotatoChips", 
-            "RiceRolls", "FermentedNapaCabbage", "PreservedCarrots", "PreservedParsnip", 
-            "PreservedBeetroot", "NoodleSoup", "SoupCansMixed", "SoupCansCarrots", 
-            "SoupCansParsnip", "SoupCansBeetroot", "SoupCansPotato", "Fabric", 
-            "Clothes", "Sugar", "Cereal", "Furniture", "CartonRoll", "PaperRoll", 
-            "Piano", "Wagon", "ToyTractor", "SunflowerOil", "CanolaOil", "OliveOil", 
-            "RiceOil", "Raisins", "GrapeJuice", "Cement", "Barrel", "Bathtub", 
-            "Bucket", "RoofPlates", "Rope", "CannedPeas", "CementBricks", 
-            "SpinachBags", "JarredGreenBean", "RiceBags", "RiceBoxes", "Seeds", 
-            "Stone", "Manure", "LiquidManure", "Digestate", "Forage", "ForageMixing", 
-            "Water", "Chaff", "TreeSaplings", "Tree", "OilseedRadish", "Poplar", 
-            "Diesel", "Def", "Air", "ElectricCharge", "Methane", "Snow", "RoadSalt", 
-            "RoundBale", "RoundBaleGrass", "RoundBaleDryGrass", "RoundBaleCotton", 
-            "RoundBaleWood", "SquareBale", "SquareBaleGrass", "SquareBaleDryGrass", 
-            "SquareBaleCotton", "SquareBaleWood", "BaleWrap", "BaleNet", "BaleTwine", 
-            "RiceSaplings", "Fertilizer", "LiquidFertilizer", "PigFood", "Tarp", 
-            "Lime", "Herbicide", "SilageAdditive", "MineralFeed", "Weed", 
-            "HorsePalomino", "HorseBlack", "HorseBay", "HorsePinto", "HorseSealBrown", 
-            "HorseGray", "HorseDun", "HorseChestnut", "CowSwissBrown", "CowHolstein", 
-            "CowLimousin", "CowAngus", "CowWaterBuffalo", "SheepLandrace", 
-            "SheepSwissMountain", "SheepSteinschaf", "SheepBlackWelsh", 
-            "PigLandrace", "PigBlackPied", "PigBerkshire", "Chicken", 
-            "ChickenRooster", "Goat"
-        ]
-    }
+# Farming Simulator 25 Bot Configuration
+
+## Configuration Structure
+Below is the JSON structure for configuring the bot:
+
+```json
+{
+  "server": {
+    "stats_url": "http://your-server-url/feed/dedicated-server-stats.xml",
+    "economy_url": "http://your-server-url/feed/dedicated-server-savegame.html?file=economy",
+    "career_savegame_url": "http://your-server-url/feed/dedicated-server-savegame.html?file=careerSavegame"
+  },
+  "channels": {
+    "auto_update_channel_id": "YOUR_CHANNEL_ID",
+    "prices_channel_id": "YOUR_CHANNEL_ID",
+    "player_notifications_channel_id": "YOUR_CHANNEL_ID"
+  },
+  "intervals": {
+    "status_update_seconds": 60,
+    "event_monitor_seconds": 30,
+    "cleanup_interval": 30
+  },
+  "messages": {
+    "server_update": "**Server Updates**\n\n🌐 **Server Name**: {server_name}\n🗺️ **Map Name**: {map_name}\n\n👥 **Players Online**: {players_online}/{player_capacity}\n⏳ **Farm Progress**: {hours}h {minutes}m\n\n📅 **Savegame Creation Date**: {creation_date}\n💾 **Last Save Date**: {last_save_date}\n\n📊 **Economic Difficulty**: {economic_difficulty}\n⏱️ **Time Scale**: {time_scale}x\n💰 **Current Money**: {current_money}\n\n🔧 **Mods**:\n{mods}"
+  },
+  "common_fill_types": [
+    "Wheat", "Barley", "Oat", "Canola", "Sorghum", "Sunflower",
+    ...
+    "Chicken", "ChickenRooster", "Goat"
+  ]
+}
 ```
 ---
 
