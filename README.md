@@ -92,7 +92,6 @@ Below is the JSON structure for configuring the bot:
   },
   "common_fill_types": [
     "Wheat", "Barley", "Oat", "Canola", "Sorghum", "Sunflower",
-    ...
     "Chicken", "ChickenRooster", "Goat"
   ]
 }
