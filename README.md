@@ -94,11 +94,28 @@ A customizable Discord bot designed to provide crop price history, best prices, 
              "server_update": "**Server Updates**\n🖥️ **Server Name:** {server_name}\n🗺️ **Map Name:** {map_name}\n👥 **Players Online:** {players_online}/{player_capacity}\n⏱️ **Farm Progress:** {hours} hours, {minutes} minutes\n\n🚜 **Vehicles:**\n{vehicles}\n\n🛠️ **Installed Mods:**\n{mods}\n\n💡 *This message updates every minute.*"
          },
          "common_fill_types": [
-             "Wheat", "Barley", "Canola", "Oats", "Corn", "Sunflowers", "Soybeans",
-             "Potatoes", "Rice", "Long Grain Rice", "Sugar Beet", "Sugarcane",
-             "Cotton", "Sorghum", "Grapes", "Olives", "Poplar", "Red Beet", "Carrots",
-             "Parsnip", "Green Beans", "Peas", "Spinach", "Grass", "Oilseed Radish"
-         ]
+            "Wheat", "Barley", "Oat", "Canola", "Sorghum", "Sunflower", 
+            "Soybean", "Maize", "Potato", "SugarBeet", "Beetroot", 
+            "Carrot", "Parsnip", "Cotton", "RiceLongGrain", "Rice", 
+            "GreenBeans", "Peas", "Spinach", "Sugarcane", "Wood", 
+            "WoodChips", "SugarBeetCut", "Silage", "Grass", 
+            "Meadow", "GrassWindrow", "DryGrass", "DryGrassWindrow", 
+            "Straw", "WheatCut", "BarleyCut", "OatCut", "CanolaCut", 
+            "SoybeanCut", "Grape", "Olive", "Milk", "GoatMilk", 
+            "BuffaloMilk", "Wool", "Egg", "Honey", "Lettuce", 
+            "Tomato", "Strawberry", "SpringOnion", "NapaCabbage", 
+            "Chilli", "Garlic", "Enoki", "Oyster", "Boards", "Planks", 
+            "WoodBeam", "PrefabWall", "Flour", "RiceFlour", "Bread", 
+            "Cake", "MilkBottled", "GoatMilkBottled", 
+            "BuffaloMilkBottled", "Butter", "Cheese", 
+            "BuffaloMozzarella", "GoatCheese", "Chocolate", 
+            "PotatoChips", "RiceRolls", "FermentedNapaCabbage", 
+            "PreservedCarrots", "PreservedParsnip", 
+            "PreservedBeetroot", "NoodleSoup", "SoupCansMixed", 
+            "SoupCansCarrots", "SoupCansParsnip", 
+            "SoupCansBeetroot", "SoupCansPotato", 
+            "Fabric", "Clothes", "Sugar"
+        ]
      }
      ```
 
