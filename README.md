@@ -60,13 +60,7 @@ A customizable Discord bot designed to provide crop price history, best prices, 
    pip install -r requirements.txt
    ```
 
-4. **create a `.env` file:**
-   - Add your Discord bot token in the following format:
-     ```plaintext
-     DISCORD_BOT_TOKEN=your-discord-bot-token
-     ```
-
-5. **Configure `config.json`:**
+4. **Configure `config.json`:**
    - Update the file with your specific server details:
 # Farming Simulator 25 Bot Configuration
 
