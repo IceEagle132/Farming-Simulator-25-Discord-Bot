@@ -62,10 +62,11 @@ A customizable Discord bot designed to provide crop price history, best prices, 
 
 4. **Configure `config.json`:**
    - Update the file with your specific server details:
-# Farming Simulator 25 Bot Configuration
 
 5. **Edit `.env`:**
    - Add your Bot Token:
+
+# Farming Simulator 25 Bot Configuration
 
 ## Configuration Structure
 Below is the JSON structure for configuring the bot:
