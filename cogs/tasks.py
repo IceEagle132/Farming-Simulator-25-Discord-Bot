@@ -96,9 +96,13 @@ class Tasks(commands.Cog):
             current_money = f"${int(career_data['current_money']):,}"  # Format with commas
 
             # Mods
+            import html
             mods = stats_data.find("Mods").findall("Mod")
-            mod_list = [mod.text.strip() if mod.text else "Unknown Mod" for mod in mods]
-            grouped_mods = "\n".join([", ".join(mod_list[i:i+3]) for i in range(0, len(mod_list), 3)])
+            mod_list = [
+                f"{html.unescape(mod.text.strip())} (v{mod.attrib.get('version', 'N/A')}) by {html.unescape(mod.attrib.get('author', 'Unknown Author'))}"
+                for mod in mods
+            ]
+            mod_details = "\n".join(f"- {mod}" for mod in mod_list)
 
             # Prepare the update message
             update_message = SERVER_UPDATE_MESSAGE.format(
@@ -108,12 +112,12 @@ class Tasks(commands.Cog):
                 player_capacity=player_capacity,
                 hours=hours,
                 minutes=minutes,
-                creation_date=creation_date,
-                last_save_date=last_save_date,
-                economic_difficulty=economic_difficulty,
-                time_scale=time_scale,
-                current_money=current_money,
-                mods=grouped_mods
+                creation_date=career_data.get("creation_date", "Unknown"),
+                last_save_date=career_data.get("last_save_date", "Unknown"),
+                economic_difficulty=career_data.get("economic_difficulty", "Unknown"),
+                time_scale=str(int(float(career_data.get("time_scale", "1")))),
+                current_money=f"${int(career_data['current_money']):,}",
+                mods=mod_details  # Insert the improved mods layout
             )
 
             # Get the update channel
