@@ -1,4 +1,5 @@
 import discord
+import html
 from discord.ext import tasks, commands
 from config import (
     STATS_URL,
@@ -72,52 +73,92 @@ class Tasks(commands.Cog):
         try:
             stats_data = fetch_server_stats()
             economy_data = fetch_economy_data()
-            career_data = fetch_career_savegame_data()  # Fetch career savegame data
+            career_data = fetch_career_savegame_data()
 
-            if stats_data is None or economy_data is None or career_data is None:
+            if stats_data is None or economy_data is None:
                 print("Failed to fetch some data.")
                 return
 
-            # Extract server stats
-            server_name = stats_data.attrib.get("name", "N/A")
-            map_name = stats_data.attrib.get("mapName", "N/A")
-            slots = stats_data.find("Slots").attrib
-            players_online = int(slots.get("numUsed", "0"))
-            player_capacity = slots.get("capacity", "N/A")
-            day_time = int(stats_data.attrib.get("dayTime", 0)) // 1000
-            hours = day_time // 3600
-            minutes = (day_time % 3600) // 60
+            # Check if career savegame data is missing or invalid
+            if career_data is None:
+                fallback_message = (
+                    "⚠️ **No farm detected!**\n"
+                    "It looks like no farm has been created on the server yet. "
+                    "Please create a farm to enable status updates for this bot."
+                )
+                channel = self.bot.get_channel(AUTO_UPDATE_CHANNEL_ID)
+                if not channel:
+                    print(f"Channel with ID {AUTO_UPDATE_CHANNEL_ID} not found.")
+                    return
 
-            # Extract career savegame data
-            creation_date = career_data["creation_date"]
-            last_save_date = career_data["last_save_date"]
-            economic_difficulty = career_data["economic_difficulty"]
-            time_scale = str(int(float(career_data["time_scale"])))  # Clean time scale
-            current_money = f"${int(career_data['current_money']):,}"  # Format with commas
+                # Update or create a fallback pinned message
+                if self.pinned_message_id:
+                    try:
+                        pinned_message = await channel.fetch_message(self.pinned_message_id)
+                        await pinned_message.edit(content=fallback_message)
+                        return
+                    except discord.NotFound:
+                        self.pinned_message_id = None
 
-            # Mods
-            import html
+                new_message = await channel.send(fallback_message)
+                await new_message.pin()
+                save_pinned_message_id(new_message.id)
+                return
+
+            # Generate grouped mods list using enhanced categorization
             mods = stats_data.find("Mods").findall("Mod")
-            mod_list = [
-                f"{html.unescape(mod.text.strip())} (v{mod.attrib.get('version', 'N/A')}) by {html.unescape(mod.attrib.get('author', 'Unknown Author'))}"
-                for mod in mods
-            ]
-            mod_details = "\n".join(f"- {mod}" for mod in mod_list)
 
-            # Prepare the update message
+            # Define keywords for categorization
+            categories = {
+                "gameplay_mods": ["Clock", "Turn Lights", "Real Mower"],
+                "farming_mods": ["Baler", "Farm", "Cultivator", "Bales", "Rounder Wrapped"],
+                "economy_mods": ["Subsidy", "Offers", "Crop Prices", "Prices"],
+            }
+
+            # Initialize mod category lists
+            gameplay_mods = []
+            farming_mods = []
+            economy_mods = []
+
+            # Categorize mods
+            for mod in mods:
+                mod_name = html.unescape(mod.text.strip())
+                version = mod.attrib.get('version', 'N/A')
+                author = html.unescape(mod.attrib.get('author', 'Unknown Author'))
+                formatted_mod = f"{mod_name} (v{version}) by {author}"
+
+                # Determine the category dynamically
+                categorized = False
+                for category, keywords in categories.items():
+                    if any(keyword in mod_name for keyword in keywords):
+                        eval(category).append(formatted_mod)
+                        categorized = True
+                        break
+
+                if not categorized:
+                    gameplay_mods.append(formatted_mod)  # Default to gameplay if uncategorized
+
+            # Generate grouped mods text
+            grouped_mods = (
+                "🎮 **Gameplay Mods**:\n" + "\n".join(f"- {mod}" for mod in gameplay_mods) +
+                "\n\n🌾 **Farming Mods**:\n" + "\n".join(f"- {mod}" for mod in farming_mods) +
+                "\n\n🛒 **Economy Mods**:\n" + "\n".join(f"- {mod}" for mod in economy_mods)
+            )
+
+            # Generate the normal update message
             update_message = SERVER_UPDATE_MESSAGE.format(
-                server_name=server_name,
-                map_name=map_name,
-                players_online=players_online,
-                player_capacity=player_capacity,
-                hours=hours,
-                minutes=minutes,
+                server_name=stats_data.attrib.get("name", "N/A"),
+                map_name=stats_data.attrib.get("mapName", "N/A"),
+                players_online=int(stats_data.find("Slots").attrib.get("numUsed", "0")),
+                player_capacity=stats_data.find("Slots").attrib.get("capacity", "N/A"),
+                hours=(int(stats_data.attrib.get("dayTime", 0)) // 3600) % 24,
+                minutes=(int(stats_data.attrib.get("dayTime", 0)) % 3600) // 60,
                 creation_date=career_data.get("creation_date", "Unknown"),
                 last_save_date=career_data.get("last_save_date", "Unknown"),
                 economic_difficulty=career_data.get("economic_difficulty", "Unknown"),
                 time_scale=str(int(float(career_data.get("time_scale", "1")))),
                 current_money=f"${int(career_data['current_money']):,}",
-                mods=mod_details  # Insert the improved mods layout
+                mods=grouped_mods  # Use grouped mods here
             )
 
             # Get the update channel
@@ -126,17 +167,15 @@ class Tasks(commands.Cog):
                 print(f"Channel with ID {AUTO_UPDATE_CHANNEL_ID} not found.")
                 return
 
+            # Update or create a pinned message
             if self.pinned_message_id:
-                # Edit the existing message using its ID
                 try:
                     pinned_message = await channel.fetch_message(self.pinned_message_id)
                     await pinned_message.edit(content=update_message)
                     return
                 except discord.NotFound:
-                    # Message ID is invalid; create a new pinned message
                     self.pinned_message_id = None
 
-            # Create a new message and pin it if no valid message exists
             new_message = await channel.send(update_message)
             await new_message.pin()
             save_pinned_message_id(new_message.id)
