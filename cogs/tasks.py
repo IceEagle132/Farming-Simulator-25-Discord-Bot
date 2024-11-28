@@ -19,6 +19,7 @@ from utils import (
     fetch_career_savegame_data,  # Added fetch_career_savegame_data
 )
 from datetime import datetime, timedelta, timezone
+import xml.etree.ElementTree as ET
 
 
 class Tasks(commands.Cog):
@@ -105,47 +106,48 @@ class Tasks(commands.Cog):
                 save_pinned_message_id(new_message.id)
                 return
 
-            # Generate grouped mods list using enhanced categorization
-            mods = stats_data.find("Mods").findall("Mod")
+            # Check if <Mods> exists and fetch mods
+            mods_element = stats_data.find("Mods")
+            gameplay_mods, farming_mods, economy_mods = [], [], []
 
-            # Define keywords for categorization
-            categories = {
-                "gameplay_mods": ["Clock", "Turn Lights", "Real Mower"],
-                "farming_mods": ["Baler", "Farm", "Cultivator", "Bales", "Rounder Wrapped"],
-                "economy_mods": ["Subsidy", "Offers", "Crop Prices", "Prices"],
-            }
+            if mods_element is not None:
+                mods = mods_element.findall("Mod")
+                categories = {
+                    "gameplay_mods": ["Clock", "Turn Lights", "Real Mower"],
+                    "farming_mods": ["Baler", "Farm", "Cultivator", "Bales", "Rounder Wrapped"],
+                    "economy_mods": ["Subsidy", "Offers", "Crop Prices", "Prices", "Contract", "Boost"],
+                }
 
-            # Initialize mod category lists
-            gameplay_mods = []
-            farming_mods = []
-            economy_mods = []
+                for mod in mods:
+                    mod_name = html.unescape(mod.text.strip())
+                    version = mod.attrib.get('version', 'N/A')
+                    author = html.unescape(mod.attrib.get('author', 'Unknown Author'))
+                    formatted_mod = f"{mod_name} (v{version}) by {author}"
 
-            # Categorize mods
-            for mod in mods:
-                mod_name = html.unescape(mod.text.strip())
-                version = mod.attrib.get('version', 'N/A')
-                author = html.unescape(mod.attrib.get('author', 'Unknown Author'))
-                formatted_mod = f"{mod_name} (v{version}) by {author}"
+                    categorized = False
+                    for category, keywords in categories.items():
+                        if any(keyword in mod_name for keyword in keywords):
+                            eval(category).append(formatted_mod)
+                            categorized = True
+                            break
 
-                # Determine the category dynamically
-                categorized = False
-                for category, keywords in categories.items():
-                    if any(keyword in mod_name for keyword in keywords):
-                        eval(category).append(formatted_mod)
-                        categorized = True
-                        break
+                    if not categorized:
+                        gameplay_mods.append(formatted_mod)
 
-                if not categorized:
-                    gameplay_mods.append(formatted_mod)  # Default to gameplay if uncategorized
+            # Build grouped mods output, skipping empty categories
+            grouped_mods = ""
+            if gameplay_mods:
+                grouped_mods += "🎮 **Gameplay Mods**:\n" + "\n".join(f"- {mod}" for mod in gameplay_mods) + "\n\n"
+            if farming_mods:
+                grouped_mods += "🌾 **Farming Mods**:\n" + "\n".join(f"- {mod}" for mod in farming_mods) + "\n\n"
+            if economy_mods:
+                grouped_mods += "🛒 **Economy Mods**:\n" + "\n".join(f"- {mod}" for mod in economy_mods) + "\n\n"
 
-            # Generate grouped mods text
-            grouped_mods = (
-                "🎮 **Gameplay Mods**:\n" + "\n".join(f"- {mod}" for mod in gameplay_mods) +
-                "\n\n🌾 **Farming Mods**:\n" + "\n".join(f"- {mod}" for mod in farming_mods) +
-                "\n\n🛒 **Economy Mods**:\n" + "\n".join(f"- {mod}" for mod in economy_mods)
-            )
+            # Fallback if no mods exist
+            if not grouped_mods.strip():
+                grouped_mods = "⚙️ No mods available or detected."
 
-            # Generate the normal update message
+            # Generate the update message
             update_message = SERVER_UPDATE_MESSAGE.format(
                 server_name=stats_data.attrib.get("name", "N/A"),
                 map_name=stats_data.attrib.get("mapName", "N/A"),
@@ -158,7 +160,7 @@ class Tasks(commands.Cog):
                 economic_difficulty=career_data.get("economic_difficulty", "Unknown"),
                 time_scale=str(int(float(career_data.get("time_scale", "1")))),
                 current_money=f"${int(career_data['current_money']):,}",
-                mods=grouped_mods  # Use grouped mods here
+                mods=grouped_mods
             )
 
             # Get the update channel
@@ -187,21 +189,14 @@ class Tasks(commands.Cog):
     async def before_monitor_events(self):
         await self.bot.wait_until_ready()
 
-    # Task: Track player joins and leaves
     @tasks.loop(seconds=EVENT_MONITOR_SECONDS)
     async def track_player_activity(self):
-        """
-        Periodically track player activity on the server, detecting joins and leaves.
-        Sends notifications to the player activity channel.
-        """
         try:
-            # Fetch server stats
             stats_data = fetch_server_stats()
             if stats_data is None:
                 print("Failed to fetch server stats.")
                 return
 
-            # Parse current players
             current_players = set()
             slots = stats_data.find("Slots")
             if slots:
@@ -210,11 +205,9 @@ class Tasks(commands.Cog):
                         name = player.text.strip()
                         current_players.add(name)
 
-            # Compare with previous players
             joined_players = current_players - self.previous_players
             left_players = self.previous_players - current_players
 
-            # Notify the dedicated player notifications channel
             notification_channel = self.bot.get_channel(PLAYER_NOTIFICATIONS_CHANNEL_ID)
             if notification_channel:
                 for player in joined_players:
@@ -222,7 +215,6 @@ class Tasks(commands.Cog):
                 for player in left_players:
                     await notification_channel.send(f"🚪 **Player Left:** {player}")
 
-            # Update the cached player list
             self.previous_players = current_players
 
         except Exception as e:
@@ -242,13 +234,11 @@ class Tasks(commands.Cog):
 
             time_threshold = datetime.now(timezone.utc) - timedelta(seconds=CLEANUP_INTERVAL)
 
-            # Fetch messages from the channel
             async for message in channel.history(limit=100):
                 if message.pinned:
                     continue
                 if message.created_at < time_threshold:
                     await message.delete()
-            #print(f"Cleaned up messages older than {CLEANUP_INTERVAL} seconds in the prices channel.")
         except Exception as e:
             print(f"Error in cleanup_messages: {e}")
 
