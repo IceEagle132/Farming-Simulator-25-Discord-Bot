@@ -1,11 +1,15 @@
 import discord
 import html
+import time
+import json
 from discord.ext import tasks, commands
+from datetime import datetime, timedelta, timezone
 from config import (
     STATS_URL,
+    ECONOMY_URL,
     AUTO_UPDATE_CHANNEL_ID,
     PRICES_CHANNEL_ID,
-    PLAYER_NOTIFICATIONS_CHANNEL_ID,  # Add a dedicated channel for player notifications
+    PLAYER_NOTIFICATIONS_CHANNEL_ID,
     STATUS_UPDATE_SECONDS,
     EVENT_MONITOR_SECONDS,
     CLEANUP_INTERVAL,
@@ -16,11 +20,27 @@ from utils import (
     save_pinned_message_id,
     fetch_server_stats,
     fetch_economy_data,
-    fetch_career_savegame_data,  # Added fetch_career_savegame_data
+    fetch_career_savegame_data,
 )
-from datetime import datetime, timedelta, timezone
 import xml.etree.ElementTree as ET
 
+# Persistent storage for player activity
+player_playtime = {}
+player_sessions = {}
+
+def save_playtime():
+    """Save player playtime to a JSON file for persistence."""
+    with open("player_playtime.json", "w") as f:
+        json.dump(player_playtime, f)
+
+def load_playtime():
+    """Load player playtime from a JSON file."""
+    global player_playtime
+    try:
+        with open("player_playtime.json", "r") as f:
+            player_playtime = json.load(f)
+    except FileNotFoundError:
+        player_playtime = {}
 
 class Tasks(commands.Cog):
     def __init__(self, bot):
@@ -28,6 +48,7 @@ class Tasks(commands.Cog):
         self.pinned_message_id = load_pinned_message_id()
         self.tasks_started = False  # Flag to prevent starting tasks multiple times
         self.previous_players = set()  # Cache for player join/leave tracking
+        load_playtime()  # Load playtime data from file
 
     @commands.Cog.listener()
     async def on_ready(self):
@@ -35,7 +56,7 @@ class Tasks(commands.Cog):
             self.update_status.start()
             self.monitor_events.start()
             self.cleanup_messages.start()
-            self.track_player_activity.start()  # Start player tracking task
+            self.track_player_activity.start()
             self.tasks_started = True
             print("Started all tasks.")
 
@@ -44,6 +65,7 @@ class Tasks(commands.Cog):
         self.monitor_events.cancel()
         self.cleanup_messages.cancel()
         self.track_player_activity.cancel()
+        save_playtime()  # Save playtime data on unload
 
     @tasks.loop(seconds=STATUS_UPDATE_SECONDS)
     async def update_status(self):
@@ -84,16 +106,10 @@ class Tasks(commands.Cog):
             if career_data is None:
                 fallback_message = (
                     "⚠️ **No farm detected!**\n"
-                    "It looks like no farm has been created on the server yet. "
                     "Please create a farm to enable status updates for this bot."
                 )
                 channel = self.bot.get_channel(AUTO_UPDATE_CHANNEL_ID)
-                if not channel:
-                    print(f"Channel with ID {AUTO_UPDATE_CHANNEL_ID} not found.")
-                    return
-
-                # Update or create a fallback pinned message
-                if self.pinned_message_id:
+                if channel and self.pinned_message_id:
                     try:
                         pinned_message = await channel.fetch_message(self.pinned_message_id)
                         await pinned_message.edit(content=fallback_message)
@@ -209,13 +225,22 @@ class Tasks(commands.Cog):
             left_players = self.previous_players - current_players
 
             notification_channel = self.bot.get_channel(PLAYER_NOTIFICATIONS_CHANNEL_ID)
-            if notification_channel:
-                for player in joined_players:
-                    await notification_channel.send(f"🎮 **Player Joined:** {player}")
-                for player in left_players:
-                    await notification_channel.send(f"🚪 **Player Left:** {player}")
+
+            for player in joined_players:
+                total_time = self.format_playtime(player_playtime.get(player, 0))  # Use self.format_playtime
+                player_sessions[player] = time.time()
+                if notification_channel:
+                    await notification_channel.send(f"🎮 **Player Joined:** {player} (Total Playtime: {total_time})")
+
+            for player in left_players:
+                session_time = time.time() - player_sessions.pop(player, time.time())
+                player_playtime[player] = player_playtime.get(player, 0) + session_time
+                formatted_time = self.format_playtime(session_time)  # Use self.format_playtime
+                if notification_channel:
+                    await notification_channel.send(f"🚪 **Player Left:** {player} (Session: {formatted_time})")
 
             self.previous_players = current_players
+            save_playtime()
 
         except Exception as e:
             print(f"Error in track_player_activity: {e}")
@@ -246,6 +271,24 @@ class Tasks(commands.Cog):
     async def before_cleanup_messages(self):
         await self.bot.wait_until_ready()
 
+    def format_playtime(self, seconds):
+        """Format playtime from seconds to 'Xh Ym'."""
+        hours = int(seconds // 3600)
+        minutes = int((seconds % 3600) // 60)
+        return f"{hours}h {minutes}m" if hours > 0 else f"{minutes}m"
+
+    @commands.command(name="leaderboard")
+    async def leaderboard(self, ctx):
+        """Display a leaderboard of top players by playtime."""
+        if not player_playtime:
+            await ctx.send("🏆 **Player Leaderboard** 🏆\nNo players have accumulated any playtime yet.")
+            return
+
+        sorted_players = sorted(player_playtime.items(), key=lambda x: x[1], reverse=True)[:10]
+        leaderboard = "\n".join(
+            [f"{i+1}. {player}: {self.format_playtime(playtime)}" for i, (player, playtime) in enumerate(sorted_players)]
+        )
+        await ctx.send(f"🏆 **Player Leaderboard** 🏆\n{leaderboard}")
 
 async def setup(bot):
     await bot.add_cog(Tasks(bot))
