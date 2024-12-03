@@ -6,7 +6,7 @@ A customizable Discord bot designed to provide crop price history, best prices, 
 
 - **VPS (Virtual Private Server)** ✅
 - **Home Hosted** ✅
-- Other hosting options ❌ *Not Supported*
+- Other hosting options ❌ *Not Supported* - *To Be Added*
 
 
 # Add Me on Discord if you have any issues: IceEagle132
