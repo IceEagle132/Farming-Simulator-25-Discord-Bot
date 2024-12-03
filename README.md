@@ -2,6 +2,13 @@
 
 A customizable Discord bot designed to provide crop price history, best prices, and live server updates for Farming Simulator 25 players.
 
+**Supported Hosting Options**
+
+- **VPS (Virtual Private Server)** ✅
+- **Home Hosted** ✅
+- Other hosting options ❌ *Not Supported*
+
+
 # Add Me on Discord if you have any issues: IceEagle132
 ![Discord](https://i.imgur.com/WBZNr94.png "Profile")
 
