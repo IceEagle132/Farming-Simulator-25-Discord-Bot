@@ -27,10 +27,12 @@ A customizable Discord bot designed to provide crop price history, best prices, 
   - Displays live Farming Simulator 25 server stats, including player count, map name, vehicles, and installed mods.
   - Updates bot status to show the number of players online.
 
-  ![Server Updates](https://i.imgur.com/iI7YWjo.png "Server Updates Example")
+  ![image](https://github.com/user-attachments/assets/89c50293-6e93-4746-aa4f-f1f8457c4be0)
   ![Server Status](https://i.imgur.com/UDr5TnO.png "Server Status Example")
 
-  ![Player Join/Leave](https://i.imgur.com/AMEgGEF.png "Join/Leave Example")
+  ![image](https://github.com/user-attachments/assets/ffb1427c-4dd4-4fcb-a543-e0f89eb18136)
+  ![image](https://github.com/user-attachments/assets/0ab47472-ffb6-48e7-a72a-b8a5d8397bc2)
+
 
 - **Customizable Settings**:
   - Configure channels, crops, and update intervals using `config.json`.
