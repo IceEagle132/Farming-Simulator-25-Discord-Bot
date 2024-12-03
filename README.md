@@ -10,7 +10,8 @@ A customizable Discord bot designed to provide crop price history, best prices, 
 
 
 # Add Me on Discord if you have any issues: IceEagle132
-![Discord](https://i.imgur.com/WBZNr94.png "Profile")
+![image](https://github.com/user-attachments/assets/be45bb0c-58c2-4c75-a2e1-9a424bac0309)
+
 
 ---
 
