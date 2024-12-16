@@ -4,12 +4,23 @@ from config import ECONOMY_URL, STATS_URL, PRICES_CHANNEL_ID, COMMON_FILL_TYPES,
 import discord
 
 def fetch_economy_data():
-    """Fetch and parse the economy XML data."""
     try:
-        response = requests.get(ECONOMY_URL)
-        response.raise_for_status()
-        return ET.fromstring(response.content)
-    except Exception as e:
+        # Use the dedicated URL for economy data
+        response = requests.get(ECONOMY_URL, timeout=10)
+
+        # Check if the response is empty
+        if not response.text.strip():
+            print("Empty response received from the server.")
+            return None
+
+        # Parse the XML
+        economy_data = ET.fromstring(response.text)
+        return economy_data
+
+    except ET.ParseError as e:
+        print(f"Error parsing economy data: {e}")
+        return None
+    except requests.RequestException as e:
         print(f"Error fetching economy data: {e}")
         return None
 
@@ -57,6 +68,19 @@ def load_pinned_message_id():
     try:
         with open("pinned_message_id.txt", "r") as file:
             return int(file.read())
+    except (FileNotFoundError, ValueError):
+        return None
+
+def save_mod_pinned_message_id(message_id):
+    """Save the pinned mod message ID to a file."""
+    with open("pinned_mod_message_id.txt", "w") as file:
+        file.write(str(message_id))
+
+def load_mod_pinned_message_id():
+    """Load the pinned mod message ID from a file."""
+    try:
+        with open("pinned_mod_message_id.txt", "r") as file:
+            return int(file.read().strip())
     except (FileNotFoundError, ValueError):
         return None
 

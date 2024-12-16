@@ -18,6 +18,8 @@ from config import (
 from utils import (
     load_pinned_message_id,
     save_pinned_message_id,
+    save_mod_pinned_message_id,
+    load_mod_pinned_message_id,
     fetch_server_stats,
     fetch_economy_data,
     fetch_career_savegame_data,
@@ -41,6 +43,20 @@ def load_playtime():
             player_playtime = json.load(f)
     except FileNotFoundError:
         player_playtime = {}
+
+MAX_MESSAGE_LENGTH = 2000  # Discord's message character limit
+
+def split_message(content):
+    """Split a long message into smaller chunks that fit Discord's message limit."""
+    while content:
+        if len(content) <= MAX_MESSAGE_LENGTH:
+            yield content
+            break
+        split_index = content.rfind('\n', 0, MAX_MESSAGE_LENGTH)
+        if split_index == -1:
+            split_index = MAX_MESSAGE_LENGTH
+        yield content[:split_index]
+        content = content[split_index:].strip()
 
 class Tasks(commands.Cog):
     def __init__(self, bot):
@@ -102,29 +118,13 @@ class Tasks(commands.Cog):
                 print("Failed to fetch some data.")
                 return
 
-            # Check if career savegame data is missing or invalid
-            if career_data is None:
-                fallback_message = (
-                    "⚠️ **No farm detected!**\n"
-                    "Please create a farm to enable status updates for this bot."
-                )
-                channel = self.bot.get_channel(AUTO_UPDATE_CHANNEL_ID)
-                if channel and self.pinned_message_id:
-                    try:
-                        pinned_message = await channel.fetch_message(self.pinned_message_id)
-                        await pinned_message.edit(content=fallback_message)
-                        return
-                    except discord.NotFound:
-                        self.pinned_message_id = None
-
-                new_message = await channel.send(fallback_message)
-                await new_message.pin()
-                save_pinned_message_id(new_message.id)
-                return
-
             # Check if <Mods> exists and fetch mods
             mods_element = stats_data.find("Mods")
-            gameplay_mods, farming_mods, economy_mods = [], [], []
+            categorized_mods = {
+                "gameplay_mods": [],
+                "farming_mods": [],
+                "economy_mods": []
+            }
 
             if mods_element is not None:
                 mods = mods_element.findall("Mod")
@@ -143,28 +143,32 @@ class Tasks(commands.Cog):
                     categorized = False
                     for category, keywords in categories.items():
                         if any(keyword in mod_name for keyword in keywords):
-                            eval(category).append(formatted_mod)
+                            categorized_mods[category].append(formatted_mod)
                             categorized = True
                             break
 
                     if not categorized:
-                        gameplay_mods.append(formatted_mod)
+                        categorized_mods["gameplay_mods"].append(formatted_mod)
 
-            # Build grouped mods output, skipping empty categories
-            grouped_mods = ""
-            if gameplay_mods:
-                grouped_mods += "🎮 **Gameplay Mods**:\n" + "\n".join(f"- {mod}" for mod in gameplay_mods) + "\n\n"
-            if farming_mods:
-                grouped_mods += "🌾 **Farming Mods**:\n" + "\n".join(f"- {mod}" for mod in farming_mods) + "\n\n"
-            if economy_mods:
-                grouped_mods += "🛒 **Economy Mods**:\n" + "\n".join(f"- {mod}" for mod in economy_mods) + "\n\n"
-
-            # Fallback if no mods exist
-            if not grouped_mods.strip():
+                grouped_mods = ""
+                if categorized_mods["gameplay_mods"]:
+                    grouped_mods += "🎮 **Gameplay Mods**:\n" + "\n".join(f"- {mod}" for mod in categorized_mods["gameplay_mods"]) + "\n\n"
+                if categorized_mods["farming_mods"]:
+                    grouped_mods += "🌾 **Farming Mods**:\n" + "\n".join(f"- {mod}" for mod in categorized_mods["farming_mods"]) + "\n\n"
+                if categorized_mods["economy_mods"]:
+                    grouped_mods += "🛒 **Economy Mods**:\n" + "\n".join(f"- {mod}" for mod in categorized_mods["economy_mods"]) + "\n\n"
+                if not grouped_mods.strip():
+                    grouped_mods = "⚙️ No mods available or detected."
+            else:
                 grouped_mods = "⚙️ No mods available or detected."
 
-            # Generate the update message
-            update_message = SERVER_UPDATE_MESSAGE.format(
+            # Check if the grouped_mods exceeds Discord's 2000-character limit
+            if len(grouped_mods) > MAX_MESSAGE_LENGTH:
+                print("Mod list exceeds the character limit. Mods will not be displayed.")
+                grouped_mods = "⚠️ **Mods list is too long to display.**"
+
+            # Main update message (without mods)
+            main_update_message = SERVER_UPDATE_MESSAGE.format(
                 server_name=stats_data.attrib.get("name", "N/A"),
                 map_name=stats_data.attrib.get("mapName", "N/A"),
                 players_online=int(stats_data.find("Slots").attrib.get("numUsed", "0")),
@@ -176,27 +180,65 @@ class Tasks(commands.Cog):
                 economic_difficulty=career_data.get("economic_difficulty", "Unknown"),
                 time_scale=str(int(float(career_data.get("time_scale", "1")))),
                 current_money=f"${int(career_data['current_money']):,}",
-                mods=grouped_mods
+                mods=""
             )
 
-            # Get the update channel
             channel = self.bot.get_channel(AUTO_UPDATE_CHANNEL_ID)
             if not channel:
                 print(f"Channel with ID {AUTO_UPDATE_CHANNEL_ID} not found.")
                 return
 
-            # Update or create a pinned message
+            # Update or create the pinned main update message
             if self.pinned_message_id:
                 try:
                     pinned_message = await channel.fetch_message(self.pinned_message_id)
-                    await pinned_message.edit(content=update_message)
-                    return
+                    await pinned_message.edit(content=main_update_message)
+                    print("Updated the main update message.")
                 except discord.NotFound:
                     self.pinned_message_id = None
+                    print("Pinned main update message not found. Creating a new one.")
 
-            new_message = await channel.send(update_message)
-            await new_message.pin()
-            save_pinned_message_id(new_message.id)
+            if not self.pinned_message_id:
+                try:
+                    new_message = await channel.send(main_update_message)
+                    await new_message.pin()
+                    save_pinned_message_id(new_message.id)
+                    print("Sent and pinned a new main update message.")
+                except discord.HTTPException as http_exc:
+                    print(f"Failed to send or pin the main update message: {http_exc}")
+
+            # Check if mods are too long
+            if grouped_mods == "⚠️ **Mods list is too long to display.**":
+                # Optionally, delete the existing pinned mods message if any
+                pinned_mod_message_id = load_mod_pinned_message_id()
+                if pinned_mod_message_id:
+                    try:
+                        pinned_mod_message = await channel.fetch_message(pinned_mod_message_id)
+                        await pinned_mod_message.delete()
+                        print("Deleted the old mods message due to length limit.")
+                    except discord.NotFound:
+                        print(f"Mod message ID {pinned_mod_message_id} not found.")
+                return  # Skip sending the mods message
+
+            # Update or create the pinned mods message
+            pinned_mod_message_id = load_mod_pinned_message_id()
+            if pinned_mod_message_id:
+                try:
+                    pinned_mod_message = await channel.fetch_message(pinned_mod_message_id)
+                    await pinned_mod_message.edit(content=grouped_mods)
+                    print("Updated the pinned mods message.")
+                except discord.NotFound:
+                    pinned_mod_message_id = None
+                    print("Pinned mods message not found. Creating a new one.")
+
+            if not pinned_mod_message_id:
+                try:
+                    new_mod_message = await channel.send(grouped_mods)
+                    await new_mod_message.pin()
+                    save_mod_pinned_message_id(new_mod_message.id)
+                    print("Sent and pinned a new mods message.")
+                except discord.HTTPException as http_exc:
+                    print(f"Failed to send or pin the mods message: {http_exc}")
 
         except Exception as e:
             print(f"Error in monitor_events: {e}")
