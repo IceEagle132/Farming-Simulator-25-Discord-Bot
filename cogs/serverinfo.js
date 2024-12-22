@@ -1,7 +1,6 @@
-// ./cogs/serverinfo.js
-
 const { EmbedBuilder, TextChannel } = require('discord.js');
 const axios = require('axios');
+const { parseStringPromise } = require('xml2js');
 const { fetchCareerSavegame } = require('../utils');
 const config = require('../config.json');
 const fs = require('fs');
@@ -9,15 +8,12 @@ const logger = require('../logger');
 
 const EMBED_TRACKER_PATH = './embedTracker.json';
 
-// Safely add fields to embed with enhanced logging and validation
+// Safe field addition to avoid empty/undefined values
 function addFieldSafe(embed, name, value, inline = true) {
     logger.debug(`Attempting to add field: ${name} - ${value}`);
-    
     if (value && value !== 'undefined' && value !== '') {
-        // Truncate if too long (Discord embed limits)
         if (name.length > 256) name = name.substring(0, 253) + '...';
         if (value.length > 1024) value = value.substring(0, 1021) + '...';
-
         embed.addFields({ 
             name: String(name).trim(), 
             value: String(value).trim(), 
@@ -28,17 +24,32 @@ function addFieldSafe(embed, name, value, inline = true) {
     }
 }
 
-// Check if the server is online by pinging the savegame URL
+// Improved server status check using XML parsing
 async function isServerOnline() {
     try {
-        const response = await axios.get(config.server.career_savegame_url, { timeout: 5000 });
-        return response.status === 200;
+        logger.info(`Fetching server stats from: ${config.server.stats_url}`);
+        const response = await axios.get(config.server.stats_url, { timeout: 10_000 });
+
+        if (!response.data.trim()) {
+            throw new Error('Empty response from server stats URL.');
+        }
+
+        const data = await parseStringPromise(response.data, { explicitArray: false });
+
+        if (!data?.Server?.Slots?.$) {
+            throw new Error('Missing <Server> or <Slots> in the XML.');
+        }
+
+        logger.info('Server status check: Online');
+        return true;
+
     } catch (error) {
+        logger.warn(`Server offline or failed to fetch stats: ${error.message}`);
         return false;
     }
 }
 
-// Main function to post or update the embed
+// Main embed updater
 async function postOrUpdateEmbed(client) {
     logger.info('Checking for existing embed to update...');
 
@@ -51,22 +62,23 @@ async function postOrUpdateEmbed(client) {
         }
         logger.info(`Channel found: ${channel.name}`);
 
-        // Server Status Check
         const serverOnline = await isServerOnline();
-        const statusText = serverOnline ? '🟢 Online' : '🔴 Offline';
-        const embedColor = serverOnline ? 0x2ecc71 : 0xe74c3c;
+        let statusText = serverOnline ? '🟢 Online' : '🔴 Offline';
+        let embedColor = serverOnline ? 0x2ecc71 : 0xe74c3c;
 
-        // Fetch Savegame Data (if online)
+        // Fetch savegame data only if server is online
         let savegameData = null;
+
         if (serverOnline) {
             savegameData = await fetchCareerSavegame();
+            if (!savegameData || !savegameData.careerSavegame) {
+                logger.warn('Savegame data missing, but server remains marked online.');
+            }
+        } else {
+            logger.warn('Server offline. Skipping savegame fetch.');
+            savegameData = null;
         }
 
-        if (!savegameData || !savegameData.careerSavegame) {
-            logger.warn('Failed to fetch savegame data. Using fallback values.');
-        }
-
-        // Extract and format data
         const savegame = savegameData ? savegameData.careerSavegame : {};
         const settings = savegame.settings ? savegame.settings[0] : {};
         const statistics = savegame.statistics ? savegame.statistics[0] : {};
@@ -93,15 +105,13 @@ async function postOrUpdateEmbed(client) {
             playTime: statistics.playTime ? (statistics.playTime / 60).toFixed(1) : '0.0'
         };
 
-        // Create Embed
         const embed = new EmbedBuilder()
             .setColor(embedColor)
             .setTitle('🌐 Farming Simulator - Server Info')
             .setDescription(`Server Status: **${statusText}**`)
-            .setFooter({ text: 'Updated automatically every 10 minutes' })
+            .setFooter({ text: 'Last Updated:' })
             .setTimestamp();
 
-        // Add fields with fallback
         addFieldSafe(embed, '🗺️ Map Name', data.mapTitle);
         addFieldSafe(embed, '💾 Savegame Name', data.savegameName);
         addFieldSafe(embed, '💾 Save Date', data.saveDate);
@@ -122,13 +132,11 @@ async function postOrUpdateEmbed(client) {
         addFieldSafe(embed, '🌾 Helper Buys Seeds', data.helperBuySeeds);
         addFieldSafe(embed, '💧 Helper Buys Fertilizer', data.helperBuyFertilizer);
 
-        // Conditionally add Mod List if config.server.enable_mod_list is true
         if (config.server.enable_mod_list) {
             const modListUrl = config.server.mod_list_url || 'N/A';
             addFieldSafe(embed, '🗂️ Mod List', `[View Mods](${modListUrl})`, false);
         }
 
-        // Conditionally add Server Password if config.server.enable_server_password is true
         if (config.server.enable_server_password) {
             const serverPassword = config.server.server_password || 'N/A';
             addFieldSafe(embed, '🔑 Server Password', `||${serverPassword}||`, false);
@@ -140,9 +148,16 @@ async function postOrUpdateEmbed(client) {
         }
 
         if (embedTracker.serverinfo_message_id) {
-            const message = await channel.messages.fetch(embedTracker.serverinfo_message_id);
-            await message.edit({ embeds: [embed] });
-            logger.info(`Embed updated successfully: ${message.id}`);
+            try {
+                const message = await channel.messages.fetch(embedTracker.serverinfo_message_id);
+                await message.edit({ embeds: [embed] });
+                logger.info(`Embed updated successfully: ${message.id}`);
+            } catch (fetchError) {
+                logger.warn('Embed message not found. Sending a new one.');
+                const sentMessage = await channel.send({ embeds: [embed] });
+                embedTracker.serverinfo_message_id = sentMessage.id;
+                fs.writeFileSync(EMBED_TRACKER_PATH, JSON.stringify(embedTracker, null, 2));
+            }
         } else {
             const sentMessage = await channel.send({ embeds: [embed] });
             embedTracker.serverinfo_message_id = sentMessage.id;
@@ -154,13 +169,12 @@ async function postOrUpdateEmbed(client) {
     }
 }
 
-// Export the function directly
 module.exports = (client) => {
     client.once('ready', async () => {
         await postOrUpdateEmbed(client);
     });
 
-    const updateInterval = config.intervals.serverinfo_update_minutes * 60 * 1000;
+    const updateInterval = config.intervals.serverinfo_update_minutes * 30 * 1000;
     setInterval(async () => {
         await postOrUpdateEmbed(client);
     }, updateInterval);
