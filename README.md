@@ -65,7 +65,7 @@ A customizable Discord bot designed to provide crop price history, best prices, 
 
 ## Issues and Support
 
-If you encounter any issues, feel free to reach out to me on Discord: **IceEagle132**.
+If you encounter any issues, feel free to reach out to me on Discord: **IceEagle132**
 
 ![Contact](https://github.com/user-attachments/assets/be45bb0c-58c2-4c75-a2e1-9a424bac0309)
 
