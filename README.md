@@ -11,7 +11,6 @@ A customizable Discord bot designed to provide crop price history, best prices, 
 ---
 
 ## Features
-- Fetches real-time crop price history and best seasonal prices.
 - Updates Discord channels with Farming Simulator server status.
 - Announces player joins and leaves with optional admin tags.
 - Customizable embeds for server info and player activity.
