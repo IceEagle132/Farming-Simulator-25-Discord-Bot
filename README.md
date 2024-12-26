@@ -1,4 +1,3 @@
-
 # Farming Simulator 25 Discord Bot
 
 A customizable Discord bot designed to provide crop price history, best prices, player status, and live server updates for Farming Simulator 25 players.
