@@ -174,7 +174,7 @@ module.exports = (client) => {
         await postOrUpdateEmbed(client);
     });
 
-    const updateInterval = config.intervals.serverinfo_update_minutes * 30 * 1000;
+    const updateInterval = config.intervals.serverinfo_update_minutes * 60 * 1000;
     setInterval(async () => {
         await postOrUpdateEmbed(client);
     }, updateInterval);

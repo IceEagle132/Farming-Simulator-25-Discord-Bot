@@ -16,10 +16,12 @@ module.exports = (client) => {
     // Immediately update on startup
     await updateServerStatus(client);
 
-    // Update every 1 minute (60000 ms), or pick your own interval
+    // Use the interval from config.json
+    const updateInterval = config.intervals.serverinfo_update_minutes * 60_000;
+    
     setInterval(async () => {
       await updateServerStatus(client);
-    }, 60_000);
+    }, updateInterval);
   });
 };
 
