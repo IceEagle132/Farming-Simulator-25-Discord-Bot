@@ -92,18 +92,18 @@ async function postOrUpdateEmbed(client) {
             initialMoney: settings.initialMoney || '0',
             initialLoan: settings.initialLoan || '0',
             timeScale: settings.timeScale || '1.0',
-            trafficEnabled: settings.trafficEnabled === 'true' ? 'Yes' : 'No',
-            fruitDestruction: settings.fruitDestruction === 'true' ? 'Enabled' : 'Disabled',
-            weedsEnabled: settings.weedsEnabled === 'true' ? 'Yes' : 'No',
-            stonesEnabled: settings.stonesEnabled === 'true' ? 'Yes' : 'No',
-            snowEnabled: settings.isSnowEnabled === 'true' ? 'Yes' : 'No',
+            trafficEnabled: String(settings.trafficEnabled).trim().toLowerCase() === 'true' ? 'Yes' : 'No',
+            fruitDestruction: String(settings.fruitDestruction).trim().toLowerCase() === 'true' ? 'Enabled' : 'Disabled',
+            weedsEnabled: String(settings.weedsEnabled).trim().toLowerCase() === 'true' ? 'Yes' : 'No',
+            stonesEnabled: String(settings.stonesEnabled).trim().toLowerCase() === 'true' ? 'Yes' : 'No',
+            isSnowEnabled: String(settings.isSnowEnabled).trim().toLowerCase() === 'true' ? 'Yes' : 'No',
+            helperBuyFuel: String(settings.helperBuyFuel).trim().toLowerCase() === 'true' ? 'Yes' : 'No',
+            helperBuySeeds: String(settings.helperBuySeeds).trim().toLowerCase() === 'true' ? 'Yes' : 'No',
+            helperBuyFertilizer: String(settings.helperBuyFertilizer).trim().toLowerCase() === 'true' ? 'Yes' : 'No',
             fuelUsage: settings.fuelUsage || '0',
-            helperBuyFuel: settings.helperBuyFuel === 'true' ? 'Yes' : 'No',
-            helperBuySeeds: settings.helperBuySeeds === 'true' ? 'Yes' : 'No',
-            helperBuyFertilizer: settings.helperBuyFertilizer === 'true' ? 'Yes' : 'No',
             money: statistics.money || '0',
             playTime: statistics.playTime ? (statistics.playTime / 60).toFixed(1) : '0.0'
-        };
+        };        
 
         const embed = new EmbedBuilder()
             .setColor(embedColor)
@@ -122,7 +122,7 @@ async function postOrUpdateEmbed(client) {
         addFieldSafe(embed, '🚦 Traffic Enabled', data.trafficEnabled);
         addFieldSafe(embed, '🌱 Weeds Enabled', data.weedsEnabled);
         addFieldSafe(embed, '🪨 Stones Enabled', data.stonesEnabled);
-        addFieldSafe(embed, '❄️ Snow Enabled', data.snowEnabled);
+        addFieldSafe(embed, '❄️ Snow Enabled', data.isSnowEnabled);
         addFieldSafe(embed, '🌾 Fruit Destruction', data.fruitDestruction);
         addFieldSafe(embed, '⛽ Fuel Usage', data.fuelUsage);
         addFieldSafe(embed, '🕒 Playtime', `${data.playTime} hours`);
