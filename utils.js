@@ -1,6 +1,8 @@
 const { parseStringPromise } = require('xml2js');
 const logger = require('./logger');
 const config = require('./config.json');
+const axios = require('axios');
+
 
 // Function to fetch XML with retry and exponential backoff
 async function fetchXML(url, retries = 3, delay = 5000) {
