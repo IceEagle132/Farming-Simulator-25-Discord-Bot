@@ -4,22 +4,57 @@ const { parseStringPromise } = require('xml2js');
 const config = require('../config.json');
 const logger = require('../logger');
 const fs = require('fs');
+const path = require('path');
+const { promises: fsPromises } = require('fs');
 
 let previousPlayers = [];
 let playerSessions = {};
-const PLAYTIME_FILE = './playerPlaytime.json';
+
+// Define the directory and file path
+const DATA_DIR = path.join(__dirname, '..', 'data'); // Adjust the path as needed
+const PLAYTIME_FILE = path.join(DATA_DIR, 'playerPlaytime.json');
+
+// Ensure the data directory exists
+if (!fs.existsSync(DATA_DIR)) {
+    fs.mkdirSync(DATA_DIR, { recursive: true });
+    logger.info(`Created data directory at ${DATA_DIR}`);
+}
+
+// Initialize playtime file if it doesn't exist
+function initializePlaytimeFile() {
+    if (!fs.existsSync(PLAYTIME_FILE)) {
+        try {
+            fs.writeFileSync(PLAYTIME_FILE, JSON.stringify({}, null, 2));
+            logger.info('Initialized playerPlaytime.json with an empty object.');
+        } catch (error) {
+            logger.error(`Failed to initialize playtime file: ${error.message}`);
+        }
+    }
+}
+
+initializePlaytimeFile();
 
 // Load previous playtime from file
 function loadPlaytimeData() {
     if (fs.existsSync(PLAYTIME_FILE)) {
-        return JSON.parse(fs.readFileSync(PLAYTIME_FILE, 'utf8'));
+        try {
+            return JSON.parse(fs.readFileSync(PLAYTIME_FILE, 'utf8'));
+        } catch (error) {
+            logger.error(`Failed to parse playtime data: ${error.message}. Resetting playtime data.`);
+            return {};
+        }
     }
     return {};
 }
 
-// Save updated playtime data
-function savePlaytimeData(data) {
-    fs.writeFileSync(PLAYTIME_FILE, JSON.stringify(data, null, 2));
+// Save updated playtime data asynchronously
+async function savePlaytimeData(data) {
+    try {
+        await fsPromises.writeFile(PLAYTIME_FILE, JSON.stringify(data, null, 2));
+        logger.debug('Playtime data saved successfully.');
+    } catch (error) {
+        logger.error(`Failed to save playtime data: ${error.message}`);
+    }
 }
 
 let playtimeData = loadPlaytimeData();
@@ -28,7 +63,7 @@ module.exports = (client) => {
     client.once('ready', async () => {
         logger.info('Player status monitor with playtime tracking started.');
         await checkPlayerStatus(client);
-        setInterval(() => checkPlayerStatus(client), 60_000);
+        setInterval(() => checkPlayerStatus(client), 60_000); // Every 60 seconds
     });
 };
 
@@ -64,7 +99,7 @@ async function checkPlayerStatus(client) {
                 // Start tracking playtime if not already
                 if (!playerSessions[name]) {
                     playerSessions[name] = Date.now();
-                    logger.info(`Started tracking playtime for ${name}`);
+                    logger.info(`Started tracking playtime for ${name} at ${new Date(playerSessions[name]).toISOString()}`);
                 }
             }
         });
@@ -90,11 +125,13 @@ async function checkPlayerStatus(client) {
 
             for (const player of left) {
                 const adminNote = player.isAdmin ? ' (Admin)' : '';
-                const playtime = calculatePlaytime(player.name);
+                const totalPlaytimeSeconds = calculatePlaytime(player.name);
+                const totalPlaytime = formatPlaytime(totalPlaytimeSeconds);
+
                 const embed = new EmbedBuilder()
                     .setColor(0xed4245)
                     .setTitle('Player Left')
-                    .setDescription(`**${player.name}**${adminNote} has left ${serverName}. Total playtime: **${playtime} minutes**`)
+                    .setDescription(`**${player.name}**${adminNote} has left ${serverName}. Total playtime: **${totalPlaytime}**`)
                     .setTimestamp(new Date());
 
                 await channel.send({ embeds: [embed] });
@@ -111,17 +148,25 @@ async function checkPlayerStatus(client) {
 // Calculate playtime for a player and update stored data
 function calculatePlaytime(playerName) {
     const sessionStart = playerSessions[playerName];
-    if (!sessionStart) return 0;
+    if (!sessionStart) return playtimeData[playerName] || 0; // Return existing playtime if session not found
 
-    const sessionDuration = Math.floor((Date.now() - sessionStart) / 60000);  // in minutes
-    playerSessions[playerName] = null;  // Clear session
+    const sessionDurationSeconds = Math.floor((Date.now() - sessionStart) / 1000); // in seconds
+    delete playerSessions[playerName]; // Properly remove the session
 
     if (!playtimeData[playerName]) {
         playtimeData[playerName] = 0;
     }
-    playtimeData[playerName] += sessionDuration;
+    playtimeData[playerName] += sessionDurationSeconds;
 
-    savePlaytimeData(playtimeData);
-    logger.info(`Updated playtime for ${playerName}: ${playtimeData[playerName]} minutes total.`);
-    return sessionDuration;
+    savePlaytimeData(playtimeData); // Note: This is asynchronous
+
+    logger.info(`Updated playtime for ${playerName}: ${playtimeData[playerName]} seconds total.`);
+    return playtimeData[playerName];
+}
+
+// Helper function to format seconds into 'Xm Ys'
+function formatPlaytime(totalSeconds) {
+    const minutes = Math.floor(totalSeconds / 60);
+    const seconds = totalSeconds % 60;
+    return `${minutes}m ${seconds}s`;
 }
