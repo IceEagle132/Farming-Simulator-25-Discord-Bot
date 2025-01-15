@@ -78,7 +78,9 @@ async function checkPlayerStatus(client) {
         }
 
         const data = await parseStringPromise(response.data, { explicitArray: false });
-        const serverName = data?.Server?.$?.name || 'the farm server';
+        const serverNameStringToRemove = config.server.server_name_string_to_remove || '';
+        let serverName = data?.Server?.$?.name || 'the farm server';
+        serverName = serverName.replace(serverNameStringToRemove, '');
         const slots = data?.Server?.Slots;
         if (!slots || !slots.Player) {
             throw new Error('No <Player> elements found in <Slots>.');

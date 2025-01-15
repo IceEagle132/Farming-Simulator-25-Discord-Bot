@@ -7,7 +7,8 @@
     "enable_mod_list": false,
     "mod_list_url": "https://cloud.davisfi.xyz/s/hV08Kw46OfDSTzm",
     "enable_server_password": false,
-    "server_password": "passwordhere"
+    "server_password": "passwordhere",
+    "server_name_string_to_remove": "(4netplayers) "
   },
   "channels": {
     "serverinfo_channel_id": "1320136629989675110",
