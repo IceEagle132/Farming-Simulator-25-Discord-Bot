@@ -1,20 +1,27 @@
 {
-    "bot_token": "yourbottokenhere",
-    "prefix": "!",
-    "server": {
-      "stats_url": "https://fsm25.davisfi.xyz/feed/dedicated-server-stats.xml?code=c0dc0bc48c5dc2c8876bdbb344ad5463",
-      "career_savegame_url": "https://fsm25.davisfi.xyz//feed/dedicated-server-savegame.html?code=c0dc0bc48c5dc2c8876bdbb344ad5463&file=careerSavegame",
-      "enable_mod_list": false,
-      "mod_list_url": "https://cloud.davisfi.xyz/s/hV08Kw46OfDSTzm",
-      "enable_server_password": false,
-      "server_password": "passwordhere"
-    },
-    "channels": {
-      "serverinfo_channel_id": "1320136629989675110",
-      "player_status_channel_id": "1320176748108841010"
-    },
-    "intervals": {
-      "serverinfo_update_minutes": 1
-    },
-    "debug": false
+  "bot_token": "yourbottokenhere",
+  "prefix": "!",
+  "server": {
+    "stats_url": "https://fsm25.davisfi.xyz/feed/dedicated-server-stats.xml?code=c0dc0bc48c5dc2c8876bdbb344ad5463",
+    "career_savegame_url": "https://fsm25.davisfi.xyz//feed/dedicated-server-savegame.html?code=c0dc0bc48c5dc2c8876bdbb344ad5463&file=careerSavegame",
+    "enable_mod_list": false,
+    "mod_list_url": "https://cloud.davisfi.xyz/s/hV08Kw46OfDSTzm",
+    "enable_server_password": false,
+    "server_password": "passwordhere",
+    "server_name_string_to_remove": "(4netplayers) "
+  },
+  "channels": {
+    "serverinfo_channel_id": "1320136629989675110",
+    "player_status_channel_id": "1320176748108841010"
+  },
+  "intervals": {
+    "serverinfo_update_minutes": 1
+  },
+  "messages": {
+      "player_joined_title": "Player Joined",
+      "player_joined_description": "**{player_name}**{admin_note} has joined {server_name}!",
+      "player_left_title": "Player Left",
+      "player_left_description": "**{player_name}**{admin_note} has left {server_name}. Total playtime: **{total_playtime}**"
+  },
+  "debug": false
 }

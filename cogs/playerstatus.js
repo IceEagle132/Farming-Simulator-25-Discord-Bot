@@ -78,7 +78,9 @@ async function checkPlayerStatus(client) {
         }
 
         const data = await parseStringPromise(response.data, { explicitArray: false });
-        const serverName = data?.Server?.$?.name || 'the farm server';
+        const serverNameStringToRemove = config.server.server_name_string_to_remove || '';
+        let serverName = data?.Server?.$?.name || 'the farm server';
+        serverName = serverName.replace(serverNameStringToRemove, '');
         const slots = data?.Server?.Slots;
         if (!slots || !slots.Player) {
             throw new Error('No <Player> elements found in <Slots>.');
@@ -116,8 +118,11 @@ async function checkPlayerStatus(client) {
                 const adminNote = player.isAdmin ? ' (Admin)' : '';
                 const embed = new EmbedBuilder()
                     .setColor(0x57f287)
-                    .setTitle('Player Joined')
-                    .setDescription(`**${player.name}**${adminNote} has joined ${serverName}!`)
+                    .setTitle(config.messages.player_joined_title)
+                    .setDescription(config.messages.player_joined_description
+                        .replace('{player_name}', player.name)
+                        .replace('{admin_note}', adminNote)
+                        .replace('{server_name}', serverName))
                     .setTimestamp(new Date());
 
                 await channel.send({ embeds: [embed] });
@@ -130,8 +135,12 @@ async function checkPlayerStatus(client) {
 
                 const embed = new EmbedBuilder()
                     .setColor(0xed4245)
-                    .setTitle('Player Left')
-                    .setDescription(`**${player.name}**${adminNote} has left ${serverName}. Total playtime: **${totalPlaytime}**`)
+                    .setTitle(config.messages.player_left_title)
+                    .setDescription(config.messages.player_left_description
+                        .replace('{player_name}', player.name)
+                        .replace('{admin_note}', adminNote)
+                        .replace('{server_name}', serverName)
+                        .replace('{total_playtime}', totalPlaytime))
                     .setTimestamp(new Date());
 
                 await channel.send({ embeds: [embed] });

@@ -46,7 +46,12 @@ A customizable Discord bot designed to provide crop price history, best prices, 
 4. **Optional**: Enable or disable features:
    - Set `mod_list_url` to `null` to disable the Mod List feature.
    - Set `server_password` to `null` to disable the Server Password display.
-
+   - **Message Templates**: Customize the player join and leave message templates:
+     - `player_joined_title`: Title for the player joined message.
+     - `player_joined_description`: Description for the player joined message. Placeholders: `{player_name}`, `{admin_note}`, `{server_name}`.
+     - `player_left_title`: Title for the player left message.
+     - `player_left_description`: Description for the player left message. Placeholders: `{player_name}`, `{admin_note}`, `{server_name}`, `{total_playtime}`.
+   - Set `server_name_string_to_remove`: Specify a string to be removed from the server name, if needed (e.g., `"(HostingCompanyName) "`).
 ---
 
 ## Running The Bot
